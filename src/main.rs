@@ -93,9 +93,6 @@ fn get_color(theme: &std::fs::DirEntry) -> Result<(u8, u8, u8), &str> {
         .split('=')
         .map(|part| part.trim())
         .collect();
-    for p in &parts {
-        println!("color parts: {}", p);
-    }
     let color = parts[1];
 
     let r = u8::from_str_radix(&color[2..4], 16);
