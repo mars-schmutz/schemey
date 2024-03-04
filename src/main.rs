@@ -4,10 +4,7 @@ use std::io::BufRead;
 static THEMES: &'static str = "/Users/mschmutz/.config/alacritty/themes";
 static CONFIG: &'static str = "/Users/mschmutz/.config/alacritty/alacritty.toml";
 static BASE: &'static str = "~/.config/alacritty/themes/";
-static LUMIN: f64 = 128.0;
-//TODO: use different luminance factor based on if background color is dark or light
-//static LIGHT_LUMIN: f64 = 64.0
-//static DARK_LUMIN: f64 = 128.0
+//static LUMIN: f64 = 128.0;
 
 fn get_themes(theme_dir: String) -> Vec<std::fs::DirEntry> {
     let mut themes = vec![];
@@ -83,6 +80,9 @@ fn get_color(theme: &std::fs::DirEntry) -> Result<(u8, u8, u8), &str> {
 
     let mut color_line: String = String::new();
     for line in lines {
+        if line.starts_with("#") {
+            continue;
+        }
         if line.contains("background") {
             color_line = line;
             break;
@@ -112,8 +112,19 @@ fn calc_luminance(r: u8, g: u8, b: u8) -> f64 {
 }
 
 fn calc_contrast_color(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
+    const LIGHT_LUMIN: f64 = 64.0;
+    const DARK_LUMIN: f64 = 128.0;
+    // const LUMIN: f64 = 128.0;
+    let adjusted: f64;
     let luminance = calc_luminance(r, g, b);
-    let adjusted = LUMIN / luminance;
+    println!("luminance is {:?}", luminance);
+    // js tinycolor uses 128 as threshold
+    if luminance >= 128.0 {
+        adjusted = LIGHT_LUMIN / luminance;
+    } else {
+        adjusted = DARK_LUMIN / luminance;
+    };
+    //adjusted = LUMIN / luminance;
     let new_r = (r as f64 * adjusted).min(255.0).round() as u8;
     let new_g = (g as f64 * adjusted).min(255.0).round() as u8;
     let new_b = (b as f64 * adjusted).min(255.0).round() as u8;
@@ -122,10 +133,12 @@ fn calc_contrast_color(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
 }
 
 fn main() {
+    std::env::set_var("RUST_BACKTRACE", "1");
     let themes: Vec<std::fs::DirEntry> = get_themes(THEMES.to_string());
     let idx = select_theme(&themes);
     apply_theme(&themes[idx]);
     let bg_color: (u8, u8, u8) = get_color(&themes[idx]).expect("Error returning color tuple");
     let contrasted: (u8, u8, u8) = calc_contrast_color(bg_color.0, bg_color.1, bg_color.2);
+    println!("{}", format!("#{:02X}{:02X}{:02X}", bg_color.0, bg_color.1, bg_color.2));
     println!("{}", format!("#{:02X}{:02X}{:02X}", contrasted.0, contrasted.1, contrasted.2));
 }
