@@ -22,15 +22,22 @@ fn get_themes(theme_dir: String) -> Vec<std::fs::DirEntry> {
     themes
 }
 
-fn select_theme(themes: &Vec<std::fs::DirEntry>) -> usize {
+fn pretty_print(themes: &Vec<std::fs::DirEntry>) -> () {
     let space = 40;
-    for (idx, el) in themes.iter().enumerate() {
-        let prefix = space - idx.to_string().len();
-        print!("{}: {:<space$}", idx, el.file_name().into_string().unwrap(), space = prefix);
-        if (idx + 1) % 5 == 0 {
-            println!("");
+    let columns = 5;
+    let rows = (themes.len() + columns - 1) / columns;
+
+    for i in 0..rows {
+        for j in (i..themes.len()).step_by(rows) {
+            let prefix = space - j.to_string().len();
+            print!("{}: {:<space$}", j, themes[j].file_name().into_string().unwrap(), space = prefix);
         }
+        println!("");
     }
+}
+
+fn select_theme(themes: &Vec<std::fs::DirEntry>) -> usize {
+    pretty_print(themes);
     let mut input = String::new();
     let mut theme: usize = usize::MAX;
 
