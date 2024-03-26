@@ -4,7 +4,6 @@ use std::io::BufRead;
 static THEMES: &'static str = "/Users/mschmutz/.config/alacritty/themes";
 static CONFIG: &'static str = "/Users/mschmutz/.config/alacritty/alacritty.toml";
 static BASE: &'static str = "~/.config/alacritty/themes/";
-//static LUMIN: f64 = 128.0;
 
 fn get_themes(theme_dir: String) -> Vec<std::fs::DirEntry> {
     let mut themes = vec![];
@@ -24,11 +23,16 @@ fn get_themes(theme_dir: String) -> Vec<std::fs::DirEntry> {
 }
 
 fn select_theme(themes: &Vec<std::fs::DirEntry>) -> usize {
+    let space = 40;
     for (idx, el) in themes.iter().enumerate() {
-        println!("{} :: {}", idx, el.file_name().into_string().unwrap());
+        let prefix = space - idx.to_string().len();
+        print!("{}: {:<space$}", idx, el.file_name().into_string().unwrap(), space = prefix);
+        if (idx + 1) % 5 == 0 {
+            println!("");
+        }
     }
     let mut input = String::new();
-    let mut theme: usize = usize::MAX; // default max so that it compiles
+    let mut theme: usize = usize::MAX;
 
     println!("");
     print!("Please choose a theme > ");
@@ -114,17 +118,15 @@ fn calc_luminance(r: u8, g: u8, b: u8) -> f64 {
 fn calc_contrast_color(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
     const LIGHT_LUMIN: f64 = 64.0;
     const DARK_LUMIN: f64 = 128.0;
-    // const LUMIN: f64 = 128.0;
     let adjusted: f64;
     let luminance = calc_luminance(r, g, b);
-    println!("luminance is {:?}", luminance);
+
     // js tinycolor uses 128 as threshold
     if luminance >= 128.0 {
         adjusted = LIGHT_LUMIN / luminance;
     } else {
         adjusted = DARK_LUMIN / luminance;
     };
-    //adjusted = LUMIN / luminance;
     let new_r = (r as f64 * adjusted).min(255.0).round() as u8;
     let new_g = (g as f64 * adjusted).min(255.0).round() as u8;
     let new_b = (b as f64 * adjusted).min(255.0).round() as u8;
@@ -139,6 +141,6 @@ fn main() {
     apply_theme(&themes[idx]);
     let bg_color: (u8, u8, u8) = get_color(&themes[idx]).expect("Error returning color tuple");
     let contrasted: (u8, u8, u8) = calc_contrast_color(bg_color.0, bg_color.1, bg_color.2);
-    println!("{}", format!("#{:02X}{:02X}{:02X}", bg_color.0, bg_color.1, bg_color.2));
-    println!("{}", format!("#{:02X}{:02X}{:02X}", contrasted.0, contrasted.1, contrasted.2));
+    // println!("{}", format!("#{:02X}{:02X}{:02X}", bg_color.0, bg_color.1, bg_color.2));
+    // println!("{}", format!("#{:02X}{:02X}{:02X}", contrasted.0, contrasted.1, contrasted.2));
 }
