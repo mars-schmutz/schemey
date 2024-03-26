@@ -36,7 +36,7 @@ fn pretty_print(themes: &Vec<std::fs::DirEntry>) -> () {
     }
 }
 
-fn select_theme(themes: &Vec<std::fs::DirEntry>) -> usize {
+fn select_theme(themes: &Vec<std::fs::DirEntry>) -> Option<usize> {
     pretty_print(themes);
     let mut input = String::new();
     let mut theme: usize = usize::MAX;
@@ -47,13 +47,23 @@ fn select_theme(themes: &Vec<std::fs::DirEntry>) -> usize {
     match std::io::stdin().read_line(&mut input) {
         Ok(_) => {
             let trimmed = input.trim();
-            let result: Result<usize, _> = trimmed.parse();
-            theme = result.unwrap();
+            match trimmed.parse::<usize>() {
+                Ok(parsed) => {
+                    if parsed < themes.len() {
+                        Some(parsed)
+                    } else {
+                        None
+                    }
+                },
+                Err(_) => {
+                    None
+                }
+            }
         },
-        Err(e) => eprintln!("Error: {}", e)
-    };
-
-    theme
+        Err(_) => {
+            None
+        }
+    }
 }
 
 fn read_config() -> Vec<String> {
@@ -144,10 +154,16 @@ fn calc_contrast_color(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
 fn main() {
     std::env::set_var("RUST_BACKTRACE", "1");
     let themes: Vec<std::fs::DirEntry> = get_themes(THEMES.to_string());
-    let idx = select_theme(&themes);
-    apply_theme(&themes[idx]);
-    let bg_color: (u8, u8, u8) = get_color(&themes[idx]).expect("Error returning color tuple");
-    let contrasted: (u8, u8, u8) = calc_contrast_color(bg_color.0, bg_color.1, bg_color.2);
+    match select_theme(&themes) {
+        Some(idx) => {
+            apply_theme(&themes[idx]);
+            let bg_color: (u8, u8, u8) = get_color(&themes[idx]).expect("Error returning color tuple");
+            let contrasted: (u8, u8, u8) = calc_contrast_color(bg_color.0, bg_color.1, bg_color.2);
+        }
+        None => {
+            println!("That is not a valid theme.");
+        }
+    }
     // println!("{}", format!("#{:02X}{:02X}{:02X}", bg_color.0, bg_color.1, bg_color.2));
     // println!("{}", format!("#{:02X}{:02X}{:02X}", contrasted.0, contrasted.1, contrasted.2));
 }
